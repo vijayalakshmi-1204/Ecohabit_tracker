@@ -1,0 +1,672 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoHabit Tracker</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f7f1;color:#263b2d}
+button,input{font:inherit}
+button{cursor:pointer;border:0;border-radius:8px;padding:11px 15px}
+.primary{background:#267747;color:white}
+.primary:hover{background:#195b34}
+.muted{color:#728075}
+.hidden{display:none!important}
+.auth{max-width:410px;margin:65px auto;padding:28px;background:white;border-radius:16px;box-shadow:0 5px 25px #dce6d8}
+.auth h1{text-align:center;color:#267747}
+.auth input,.field{width:100%;padding:12px;margin:8px 0;border:1px solid #d4dfd1;border-radius:8px}
+.auth button{width:100%;margin-top:12px}
+.auth p{text-align:center;line-height:1.6}
+.app-header{background:#226640;color:white;padding:20px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.app-header h2{margin:0}
+.app-header button{background:#fff;color:#226640}
+.layout{display:flex;max-width:1200px;margin:25px auto;gap:22px;padding:0 18px}
+nav{width:190px;flex-shrink:0;background:white;border-radius:12px;padding:12px;height:max-content}
+nav button{display:block;width:100%;text-align:left;background:white;color:#334c39;margin:3px 0}
+nav button.active,nav button:hover{background:#e7f4e7;color:#226640}
+main{flex:1;min-width:0}
+h1,h2,h3{margin-top:0}
+.page-title{color:#226640}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.card,.panel{background:white;border-radius:12px;padding:20px;box-shadow:0 3px 12px #e0e9dd;margin-bottom:16px}
+.card p{margin:0;color:#728075;font-size:14px}
+.card h2{color:#267747;margin:10px 0 0}
+.habit{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #e9eee7}
+.habit:last-child{border-bottom:0}
+.habit .info{flex:1}
+.habit .info strong{display:block;margin-bottom:6px}
+.habit small{color:#728075;line-height:1.5}
+.habit input{width:19px;height:19px;accent-color:#267747}
+.habit.done strong{text-decoration:line-through;color:#859286}
+.points{color:#267747;font-weight:bold;white-space:nowrap;font-size:13px}
+.progress-bg{height:13px;background:#e5eee2;border-radius:20px;overflow:hidden;margin:15px 0}
+.progress-bar{height:100%;width:0;background:#45a46b;transition:width .3s}
+.message,.tip{background:#eaf6e9;padding:15px;border-radius:9px;line-height:1.6}
+.tip{margin-bottom:12px}
+.form-row{display:flex;gap:8px;flex-wrap:wrap}
+.form-row input{flex:1;min-width:120px}
+.history-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #e9eee7}
+.badge{display:inline-block;background:#e4f4e4;color:#267747;padding:5px 9px;border-radius:20px;font-size:12px}
+.danger{background:#fff0ed;color:#a53b2a}
+footer{text-align:center;color:#849084;padding:20px;font-size:13px}
+@media(max-width:700px){
+ .layout{display:block}
+ nav{width:100%;display:flex;overflow-x:auto;margin-bottom:18px}
+ nav button{width:auto;white-space:nowrap}
+ .cards{grid-template-columns:1fr 1fr}
+ .card,.panel{padding:15px}
+}
+@media(max-width:420px){.cards{grid-template-columns:1fr 1fr}.habit{gap:8px}.points{font-size:12px}}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<section id="authPage" class="auth">
+    <h1>🌿 EcoHabit</h1>
+    <p class="muted">Small habits. Greener future.</p>
+
+    <div id="loginForm">
+        <h2>Welcome Back!</h2>
+        <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email">
+        <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button class="primary" onclick="login()">Login</button>
+        <p>New here? <a href="#" onclick="showRegister();return false">Create an account</a></p>
+    </div>
+
+    <div id="registerForm" class="hidden">
+        <h2>Create Account</h2>
+        <input id="regName" placeholder="Your name" autocomplete="name">
+        <input id="regEmail" type="email" placeholder="Email address" autocomplete="email">
+        <input id="regPassword" type="password" placeholder="Create password (minimum 6 characters)" autocomplete="new-password">
+        <button class="primary" onclick="register()">Register</button>
+        <p>Already registered? <a href="#" onclick="showLogin();return false">Login</a></p>
+    </div>
+
+    <p id="authMessage" role="status"></p>
+    <small class="muted">Student project demo. Accounts are stored only in this browser.</small>
+</section>
+
+<!-- MAIN WEBSITE -->
+<div id="appPage" class="hidden">
+    <header class="app-header">
+        <h2>🌿 EcoHabit Tracker</h2>
+        <div>Hi, <strong id="welcomeName">Friend</strong> 👋
+            <button onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <nav>
+            <button class="active" data-page="dashboard" onclick="showPage('dashboard')">🏠 Dashboard</button>
+            <button data-page="habits" onclick="showPage('habits')">🌱 My Habits</button>
+            <button data-page="progress" onclick="showPage('progress')">📊 Progress</button>
+            <button data-page="tips" onclick="showPage('tips')">💡 Eco Tips</button>
+            <button data-page="profile" onclick="showPage('profile')">👤 Profile</button>
+        </nav>
+
+        <main>
+            <!-- DASHBOARD -->
+            <section id="dashboard" class="page">
+                <h1 class="page-title">Your Green Dashboard 🌎</h1>
+                <p class="muted" id="todayLabel"></p>
+
+                <div class="cards">
+                    <div class="card"><p>Today's Points ⭐</p><h2 id="score">0</h2></div>
+                    <div class="card"><p>Habits Completed</p><h2 id="completed">0/4</h2></div>
+                    <div class="card"><p>Daily Streak 🔥</p><h2 id="streak">0 days</h2></div>
+                </div>
+
+                <div class="panel">
+                    <h2>Today's Progress</h2>
+                    <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
+                    <p id="progressText">0% completed</p>
+                    <div class="message" id="message">Start your first eco-habit today!</div>
+                </div>
+
+                <div class="panel">
+                    <h2>Today's Habits</h2>
+                    <div id="dashboardHabits"></div>
+                    <button class="primary" onclick="showPage('habits')">Manage My Habits →</button>
+                </div>
+            </section>
+
+            <!-- HABITS -->
+            <section id="habits" class="page hidden">
+                <h1 class="page-title">My Eco Habits 🌱</h1>
+                <p class="muted">Complete habits to earn points. Your progress saves automatically.</p>
+
+                <div class="panel">
+                    <div id="habitList"></div>
+                </div>
+
+                <div class="panel">
+                    <h2>Add Your Own Habit</h2>
+                    <div class="form-row">
+                        <input class="field" id="customName" placeholder="Habit name">
+                        <input class="field" id="customPoints" type="number" min="1" max="100" placeholder="Points">
+                    </div>
+                    <button class="primary" onclick="addHabit()">+ Add Habit</button>
+                    <p class="muted">Choose a small, environmentally friendly action.</p>
+                </div>
+            </section>
+
+            <!-- PROGRESS -->
+            <section id="progress" class="page hidden">
+                <h1 class="page-title">My Progress 📊</h1>
+                <div class="cards">
+                    <div class="card"><p>Total Points</p><h2 id="totalPoints">0</h2></div>
+                    <div class="card"><p>Active Days</p><h2 id="activeDays">0</h2></div>
+                    <div class="card"><p>Best Streak</p><h2 id="bestStreak">0</h2></div>
+                </div>
+                <div class="panel">
+                    <h2>Last 7 Days</h2>
+                    <div id="weeklyChart"></div>
+                    <p class="muted">Each bar shows the points you earned on that date.</p>
+                </div>
+                <div class="panel">
+                    <h2>Daily History</h2>
+                    <div id="history"></div>
+                </div>
+            </section>
+
+            <!-- TIPS -->
+            <section id="tips" class="page hidden">
+                <h1 class="page-title">Eco Tips 💡</h1>
+                <p class="muted">Simple ideas to make your everyday life greener.</p>
+                <div id="tipsList"></div>
+                <button class="primary" onclick="randomTip()">Show Me a Random Tip ✨</button>
+                <div class="message" id="randomTipBox" style="margin-top:15px">
+                    Try a new eco-friendly action today!
+                </div>
+            </section>
+
+            <!-- PROFILE -->
+            <section id="profile" class="page hidden">
+                <h1 class="page-title">My Profile 👤</h1>
+                <div class="panel">
+                    <h2>Account Details</h2>
+                    <label for="profileName">Your name</label>
+                    <input class="field" id="profileName" placeholder="Your name">
+                    <label for="profileEmail">Email address</label>
+                    <input class="field" id="profileEmail" disabled>
+                    <button class="primary" onclick="saveProfile()">Save Profile</button>
+                    <p id="profileMessage" role="status"></p>
+                </div>
+                <div class="panel">
+                    <h2>My Eco Summary 🌳</h2>
+                    <p id="profileSummary"></p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer>EcoHabit Tracker · Made with 💚 for a greener future</footer>
+</div>
+
+<script>
+const DEFAULT_HABITS = [
+    {id:"water", name:"Save Water", detail:"Turn off the tap while brushing.", points:10},
+    {id:"power", name:"Save Electricity", detail:"Switch off unused lights and fans.", points:10},
+    {id:"plastic", name:"Avoid Plastic", detail:"Carry a reusable shopping bag.", points:10},
+    {id:"travel", name:"Walk or Cycle", detail:"Walk or cycle for a short trip.", points:15}
+];
+
+const ECO_TIPS = [
+    ["💧 Save Water","Turn off the tap while brushing and take shorter showers."],
+    ["💡 Save Energy","Switch off lights and fans when you leave a room."],
+    ["🛍️ Reduce Plastic","Carry a reusable bag and water bottle."],
+    ["🚲 Greener Travel","Walk, cycle, or use public transport when practical."],
+    ["🌱 Grow Plants","Care for a plant or start a small home garden."],
+    ["♻️ Reuse Items","Repair or reuse things before buying new ones."],
+    ["🥗 Reduce Food Waste","Plan meals and store food properly."]
+];
+
+let users = readStore("ecoUsers", []);
+let currentEmail = localStorage.getItem("ecoCurrentUser") || "";
+let userData = null;
+let activePage = "dashboard";
+
+function readStore(key, fallback) {
+    try {
+        const value = JSON.parse(localStorage.getItem(key));
+        return value ?? fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function writeStore(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+    } catch (e) {
+        alert("Unable to save data. Browser storage may be unavailable.");
+        return false;
+    }
+}
+
+function dateKey(date = new Date()) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,"0");
+    const d = String(date.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+}
+
+function getDataKey(email) {
+    return "ecoData_" + encodeURIComponent(email);
+}
+
+function getUserData(email) {
+    let data = readStore(getDataKey(email), null);
+    if (!data) {
+        data = {
+            habits: DEFAULT_HABITS.map(h => ({...h})),
+            records: {}
+        };
+    }
+    if (!Array.isArray(data.habits)) data.habits = DEFAULT_HABITS.map(h=>({...h}));
+    if (!data.records || typeof data.records !== "object") data.records = {};
+    return data;
+}
+
+function saveUserData() {
+    return writeStore(getDataKey(currentEmail), userData);
+}
+
+function todayRecord() {
+    const key = dateKey();
+    if (!Array.isArray(userData.records[key])) userData.records[key] = [];
+    return userData.records[key];
+}
+
+function scoreFor(key) {
+    const done = userData.records[key] || [];
+    return userData.habits.reduce((sum,h) =>
+        sum + (done.includes(h.id) ? h.points : 0), 0);
+}
+
+function countFor(key) {
+    const done = userData.records[key] || [];
+    return userData.habits.filter(h=>done.includes(h.id)).length;
+}
+
+function activeDates() {
+    return Object.keys(userData.records)
+        .filter(key => countFor(key) > 0)
+        .sort();
+}
+
+function currentStreak() {
+    let count = 0;
+    let day = new Date();
+    while (countFor(dateKey(day)) > 0) {
+        count++;
+        day.setDate(day.getDate()-1);
+    }
+    return count;
+}
+
+function bestStreak() {
+    const dates = activeDates();
+    let best = 0, run = 0, previous = null;
+    dates.forEach(key => {
+        const current = new Date(key + "T12:00:00");
+        if (previous) {
+            const gap = Math.round((current-previous)/86400000);
+            run = gap === 1 ? run+1 : 1;
+        } else {
+            run = 1;
+        }
+        best = Math.max(best,run);
+        previous = current;
+    });
+    return best;
+}
+
+function totalPoints() {
+    return activeDates().reduce((sum,key)=>sum+scoreFor(key),0);
+}
+
+function showRegister() {
+    document.getElementById("loginForm").classList.add("hidden");
+    document.getElementById("registerForm").classList.remove("hidden");
+    document.getElementById("authMessage").textContent = "";
+}
+
+function showLogin() {
+    document.getElementById("registerForm").classList.add("hidden");
+    document.getElementById("loginForm").classList.remove("hidden");
+    document.getElementById("authMessage").textContent = "";
+}
+
+function register() {
+    const name = document.getElementById("regName").value.trim();
+    const email = document.getElementById("regEmail").value.trim().toLowerCase();
+    const password = document.getElementById("regPassword").value;
+    const message = document.getElementById("authMessage");
+
+    if (!name || !email || !password) {
+        message.textContent = "Please fill in all fields.";
+        return;
+    }
+    if (!document.getElementById("regEmail").checkValidity()) {
+        message.textContent = "Please enter a valid email address.";
+        return;
+    }
+    if (password.length < 6) {
+        message.textContent = "Password must have at least 6 characters.";
+        return;
+    }
+    if (users.some(u=>u.email === email)) {
+        message.textContent = "An account with this email already exists.";
+        return;
+    }
+
+    users.push({name,email,password});
+    if (!writeStore("ecoUsers",users)) {
+        users = readStore("ecoUsers",[]);
+        return;
+    }
+
+    userData = {
+        habits: DEFAULT_HABITS.map(h=>({...h})),
+        records: {}
+    };
+    if (!saveUserData()) return;
+
+    document.getElementById("authMessage").textContent = "Account created!";
+    signInUser(email);
+}
+
+function login() {
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword").value;
+    const user = users.find(u=>u.email===email && u.password===password);
+
+    if (!user) {
+        document.getElementById("authMessage").textContent =
+            "Incorrect email or password. Please try again.";
+        return;
+    }
+    signInUser(email);
+}
+
+function signInUser(email) {
+    currentEmail = email;
+    localStorage.setItem("ecoCurrentUser",email);
+    userData = getUserData(email);
+    todayRecord();
+    saveUserData();
+
+    document.getElementById("authPage").classList.add("hidden");
+    document.getElementById("appPage").classList.remove("hidden");
+    document.getElementById("welcomeName").textContent =
+        users.find(u=>u.email===email)?.name || "Friend";
+
+    showPage("dashboard");
+}
+
+function logout() {
+    localStorage.removeItem("ecoCurrentUser");
+    currentEmail = "";
+    userData = null;
+    document.getElementById("appPage").classList.add("hidden");
+    document.getElementById("authPage").classList.remove("hidden");
+    showLogin();
+}
+
+function showPage(page) {
+    activePage = page;
+    document.querySelectorAll(".page").forEach(el=>el.classList.add("hidden"));
+    document.getElementById(page).classList.remove("hidden");
+
+    document.querySelectorAll("nav button").forEach(button=>{
+        button.classList.toggle("active",button.dataset.page===page);
+    });
+
+    renderAll();
+}
+
+function toggleHabit(id, checked) {
+    const done = todayRecord();
+    const index = done.indexOf(id);
+    if (checked && index===-1) done.push(id);
+    if (!checked && index!==-1) done.splice(index,1);
+
+    saveUserData();
+    renderAll();
+}
+
+function habitElement(h, done) {
+    const row = document.createElement("div");
+    row.className = "habit" + (done.includes(h.id) ? " done" : "");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = done.includes(h.id);
+    checkbox.setAttribute("aria-label","Complete "+h.name);
+    checkbox.addEventListener("change",()=>toggleHabit(h.id,checkbox.checked));
+
+    const info = document.createElement("div");
+    info.className = "info";
+
+    const title = document.createElement("strong");
+    title.textContent = h.name;
+
+    const detail = document.createElement("small");
+    detail.textContent = h.detail || "My personal eco-habit";
+
+    info.append(title,document.createElement("br"),detail);
+
+    const points = document.createElement("span");
+    points.className = "points";
+    points.textContent = "+"+h.points+" pts";
+
+    row.append(checkbox,info,points);
+    return row;
+}
+
+function renderHabits() {
+    const done = todayRecord();
+    const list = document.getElementById("habitList");
+    const dashboard = document.getElementById("dashboardHabits");
+    list.replaceChildren();
+    dashboard.replaceChildren();
+
+    userData.habits.forEach(h=>{
+        list.appendChild(habitElement(h,done));
+        dashboard.appendChild(habitElement(h,done));
+    });
+}
+
+function addHabit() {
+    const name = document.getElementById("customName").value.trim();
+    const points = Number(document.getElementById("customPoints").value);
+
+    if (!name || !Number.isInteger(points) || points<1 || points>100) {
+        alert("Enter a habit name and points between 1 and 100.");
+        return;
+    }
+    if (userData.habits.length>=20) {
+        alert("You can add up to 20 habits in this demo.");
+        return;
+    }
+
+    userData.habits.push({
+        id:"custom_"+Date.now(),
+        name:name,
+        detail:"My personal eco-friendly action.",
+        points:points
+    });
+
+    if (!saveUserData()) return;
+
+    document.getElementById("customName").value="";
+    document.getElementById("customPoints").value="";
+    renderAll();
+}
+
+function renderDashboard() {
+    const key = dateKey();
+    const score = scoreFor(key);
+    const count = countFor(key);
+    const percent = userData.habits.length
+        ? Math.round(count/userData.habits.length*100) : 0;
+
+    document.getElementById("todayLabel").textContent =
+        new Date().toLocaleDateString(undefined,{
+            weekday:"long",year:"numeric",month:"long",day:"numeric"
+        });
+
+    document.getElementById("score").textContent=score;
+    document.getElementById("completed").textContent=
+        count+"/"+userData.habits.length;
+    document.getElementById("streak").textContent=currentStreak()+" days";
+    document.getElementById("progressBar").style.width=percent+"%";
+    document.getElementById("progressText").textContent=percent+"% completed";
+
+    let message="🌱 Start your first eco-habit today!";
+    if (count>0 && count<userData.habits.length)
+        message="🌿 Great job! Every small action makes a difference.";
+    if (count===userData.habits.length && count>0)
+        message="🌍 Amazing! You completed every habit today!";
+
+    document.getElementById("message").textContent=message;
+}
+
+function renderProgress() {
+    const dates = activeDates();
+    document.getElementById("totalPoints").textContent=totalPoints();
+    document.getElementById("activeDays").textContent=dates.length;
+    document.getElementById("bestStreak").textContent=bestStreak()+" days";
+
+    const chart = document.getElementById("weeklyChart");
+    chart.replaceChildren();
+
+    const today = new Date();
+    const week = [];
+    for(let i=6;i>=0;i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate()-i);
+        week.push(dateKey(d));
+    }
+
+    const max = Math.max(1,...week.map(scoreFor));
+
+    week.forEach(key=>{
+        const row = document.createElement("div");
+        row.style.marginBottom="15px";
+
+        const label = document.createElement("div");
+        label.className="history-row";
+        const date = document.createElement("span");
+        date.textContent=key;
+        const score = document.createElement("strong");
+        score.textContent=scoreFor(key)+" points";
+        label.append(date,score);
+
+        const bg = document.createElement("div");
+        bg.className="progress-bg";
+        const bar = document.createElement("div");
+        bar.className="progress-bar";
+        bar.style.width=(scoreFor(key)/max*100)+"%";
+        bg.appendChild(bar);
+        row.append(label,bg);
+        chart.appendChild(row);
+    });
+
+    const history = document.getElementById("history");
+    history.replaceChildren();
+
+    dates.slice().reverse().forEach(key=>{
+        const row = document.createElement("div");
+        row.className="history-row";
+        const left = document.createElement("span");
+        left.textContent=key+" · "+countFor(key)+" habits";
+        const right = document.createElement("strong");
+        right.textContent=scoreFor(key)+" pts";
+        row.append(left,right);
+        history.appendChild(row);
+    });
+
+    if(!dates.length) {
+        history.textContent="Your completed habits will appear here.";
+    }
+}
+
+function renderTips() {
+    const list = document.getElementById("tipsList");
+    list.replaceChildren();
+
+    ECO_TIPS.forEach(([title,description])=>{
+        const box = document.createElement("div");
+        box.className="tip";
+        const heading = document.createElement("strong");
+        heading.textContent=title;
+        const text = document.createElement("p");
+        text.textContent=description;
+        box.append(heading,text);
+        list.appendChild(box);
+    });
+}
+
+function randomTip() {
+    const tip = ECO_TIPS[Math.floor(Math.random()*ECO_TIPS.length)];
+    document.getElementById("randomTipBox").textContent=tip[0]+": "+tip[1];
+}
+
+function renderProfile() {
+    const user = users.find(u=>u.email===currentEmail);
+    if(!user) return;
+    document.getElementById("profileName").value=user.name;
+    document.getElementById("profileEmail").value=user.email;
+    document.getElementById("profileSummary").textContent=
+        "You have earned "+totalPoints()+" eco-points and completed habits on "+
+        activeDates().length+" day(s). Keep going!";
+}
+
+function saveProfile() {
+    const name = document.getElementById("profileName").value.trim();
+    if(!name) {
+        document.getElementById("profileMessage").textContent="Name cannot be empty.";
+        return;
+    }
+
+    const user = users.find(u=>u.email===currentEmail);
+    if(!user) return;
+
+    const oldName=user.name;
+    user.name=name;
+
+    if(!writeStore("ecoUsers",users)) {
+        user.name=oldName;
+        users=readStore("ecoUsers",[]);
+        return;
+    }
+
+    document.getElementById("welcomeName").textContent=name;
+    document.getElementById("profileMessage").textContent="Profile updated successfully!";
+    renderProfile();
+}
+
+function renderAll() {
+    if(!userData || !currentEmail) return;
+    renderDashboard();
+    renderHabits();
+    renderProgress();
+    renderTips();
+    renderProfile();
+}
+
+// Restore the demo login in this browser.
+if(currentEmail && users.some(u=>u.email===currentEmail)) {
+    signInUser(currentEmail);
+}
+</script>
+</body>
+</html>
